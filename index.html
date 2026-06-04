@@ -63,7 +63,7 @@
         }
         .counter { 
             text-align: center; 
-            margin: 15px 0; 
+            margin: 15px 0 5px 0; 
             font-size: 18px; 
             font-weight: bold; 
             color: #2b6cb0; 
@@ -71,8 +71,16 @@
             padding: 10px;
             border-radius: 6px;
         }
+        /* Style baru untuk notifikasi duplikat */
+        #status-msg {
+            text-align: center;
+            font-weight: bold;
+            height: 20px;
+            margin-bottom: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
         .btn-group { 
-            margin-top: 15px; 
             display: flex; 
             gap: 10px; 
         }
@@ -89,48 +97,16 @@
             justify-content: center;
             gap: 8px;
         }
-        .btn-excel { 
-            background-color: #2f855a; 
-            color: white; 
-        }
-        .btn-clear { 
-            background-color: #e53e3e; 
-            color: white; 
-            flex: 0.5;
-        }
-        .table-section {
-            margin-top: 25px;
-        }
-        .table-section h3 {
-            margin-bottom: 10px;
-            color: #4a5568;
-            font-size: 16px;
-        }
-        .table-wrapper {
-            overflow-x: auto;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-        }
-        table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            font-size: 14px; 
-            text-align: left;
-        }
-        th, td { 
-            padding: 12px; 
-            border-bottom: 1px solid #e2e8f0; 
-        }
-        th { 
-            background-color: #f7fafc; 
-            color: #4a5568; 
-            font-weight: 600;
-        }
+        .btn-excel { background-color: #2f855a; color: white; }
+        .btn-clear { background-color: #e53e3e; color: white; flex: 0.5; }
+        .table-section { margin-top: 25px; }
+        .table-section h3 { margin-bottom: 10px; color: #4a5568; font-size: 16px; }
+        .table-wrapper { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
+        table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
+        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f7fafc; color: #4a5568; font-weight: 600; }
         tr:nth-child(even) { background-color: #f8fafc; }
-        .scan-success { 
-            background-color: #c6f6d5 !important; 
-            animation: fadeOutHighlight 2s forwards; 
-        }
+        .scan-success { background-color: #c6f6d5 !important; animation: fadeOutHighlight 2s forwards; }
         @keyframes fadeOutHighlight {
             from { background-color: #c6f6d5; }
             to { background-color: transparent; }
@@ -146,6 +122,8 @@
     <div id="reader"></div>
     
     <div class="counter">📦 Total Terbaca: <span id="total-count">0</span> Item</div>
+    
+    <div id="status-msg"></div>
     
     <div class="btn-group">
         <button class="btn btn-excel" id="btn-export">📥 Unduh Data</button>
@@ -180,19 +158,42 @@
     let lastScannedCode = "";
     let lastScanTime = 0;
 
-    // Fungsi otomatis berjalan saat mendeteksi Barcode
     function onScanSuccess(decodedText, decodedResult) {
         const currentTime = new Date().getTime();
+        const statusMsg = document.getElementById('status-msg');
         
-        // Mencegah scan barcode yang sama dalam jeda 2.5 detik
-        if (decodedText === lastScannedCode && (currentTime - lastScanTime < 2500)) {
-            return; 
+        // 1. Validasi Array: Cek apakah barcode sudah ada di seluruh list scannedData
+        const isDuplicate = scannedData.some(item => item.Kode_Barcode_SN === decodedText);
+
+        if (isDuplicate) {
+            // Mencegah peringatan muncul terlalu cepat dan berkedip (beri jeda 2 detik untuk peringatan)
+            if (decodedText !== lastScannedCode || (currentTime - lastScanTime > 2000)) {
+                statusMsg.innerText = "⚠️ Barcode ini sudah masuk di list!";
+                statusMsg.style.color = "#e53e3e"; // Warna merah
+                
+                // Hilangkan pesan setelah 2 detik
+                setTimeout(() => { 
+                    if(statusMsg.innerText.includes("⚠️")) statusMsg.innerText = ""; 
+                }, 2000);
+                
+                lastScannedCode = decodedText;
+                lastScanTime = currentTime;
+            }
+            return; // Hentikan proses, jangan simpan dan jangan bunyi beep
         }
         
+        // 2. Jika lolos validasi (data baru), simpan dan proses
         lastScannedCode = decodedText;
         lastScanTime = currentTime;
         
         playBeepSound();
+        
+        // Tampilkan indikator sukses
+        statusMsg.innerText = "✅ Berhasil discan!";
+        statusMsg.style.color = "#2f855a"; // Warna hijau
+        setTimeout(() => { 
+            if(statusMsg.innerText.includes("✅")) statusMsg.innerText = ""; 
+        }, 2000);
         
         const waktuSekarang = new Date().toLocaleString('id-ID', { 
             year: 'numeric', month: '2-digit', day: '2-digit',
@@ -209,7 +210,6 @@
         updateUiView();
     }
 
-    // Fungsi bunyi beep
     function playBeepSound() {
         try {
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -230,7 +230,6 @@
         }
     }
 
-    // Update tampilan tabel
     function updateUiView() {
         const tbody = document.getElementById('table-body');
         document.getElementById('total-count').innerText = scannedData.length;
@@ -254,7 +253,6 @@
         tbody.innerHTML = tableRowsHtml;
     }
 
-    // Export Data ke format CSV
     document.getElementById('btn-export').addEventListener('click', function() {
         if (scannedData.length === 0) {
             alert("⚠️ Belum ada data material yang di-scan!");
@@ -281,21 +279,20 @@
         document.body.removeChild(link);
     });
 
-    // Tombol Reset
     document.getElementById('btn-clear').addEventListener('click', function() {
         if (scannedData.length === 0) return;
         if (confirm("⚠️ Yakin hapus semua data scan?")) {
             scannedData = [];
             lastScannedCode = "";
+            document.getElementById('status-msg').innerText = "";
             updateUiView();
         }
     });
 
-    // Inisialisasi Scanner Full-Screen (tanpa QR Box pembatas)
     const html5QrcodeScanner = new Html5QrcodeScanner(
         "reader", 
         { 
-            fps: 10, // Menurunkan FPS agar kamera lebih fokus
+            fps: 10,
             rememberLastUsedCamera: true,
             supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
         },
