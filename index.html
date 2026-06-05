@@ -3,150 +3,130 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Scanner Label Material & Export</title>
+    <title>Scanner Inventory Material</title>
     <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         * { box-sizing: border-box; }
-        body { 
-            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; 
-            margin: 0; 
-            padding: 15px; 
-            background-color: #f4f7f6; 
-            color: #333; 
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; padding: 15px; background-color: #f4f7f6; color: #333; }
+        .container { max-width: 600px; margin: 0 auto; background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 10px rgba(0,0,0,0.08); }
+        h2 { text-align: center; color: #2c3e50; margin-top: 0; margin-bottom: 5px; font-size: 22px; }
+        p.subtitle { text-align: center; color: #7f8c8d; margin-top: 0; margin-bottom: 20px; font-size: 14px; }
+        
+        /* Styling Toggle Mode IN/OUT */
+        .mode-selector { display: flex; justify-content: center; gap: 10px; margin-bottom: 15px; }
+        .mode-selector label {
+            flex: 1; text-align: center; padding: 12px; font-weight: bold; font-size: 16px;
+            border-radius: 8px; cursor: pointer; border: 2px solid #cbd5e0; color: #718096; transition: all 0.2s;
         }
-        .container { 
-            max-width: 600px; 
-            margin: 0 auto; 
-            background: white; 
-            padding: 20px; 
-            border-radius: 12px; 
-            box-shadow: 0 4px 10px rgba(0,0,0,0.08); 
+        .mode-selector input[type="radio"] { display: none; }
+        #mode-in:checked + label { background-color: #c6f6d5; border-color: #38a169; color: #276749; }
+        #mode-out:checked + label { background-color: #fed7d7; border-color: #e53e3e; color: #9b2c2c; }
+
+        /* Styling Input Kategori */
+        .category-container {
+            background-color: #ebf8ff; padding: 15px; border-radius: 8px; margin-bottom: 15px;
+            border: 1px solid #bee3f8; transition: all 0.3s ease;
         }
-        h2 { 
-            text-align: center; 
-            color: #2c3e50; 
-            margin-top: 0;
-            margin-bottom: 5px;
-            font-size: 22px;
+        .category-container label { display: block; font-weight: bold; color: #2b6cb0; margin-bottom: 8px; font-size: 14px;}
+        .category-container input {
+            width: 100%; padding: 12px; font-size: 15px; border: 1px solid #90cdf4; border-radius: 6px; outline: none;
         }
-        p.subtitle {
-            text-align: center;
-            color: #7f8c8d;
-            margin-top: 0;
-            margin-bottom: 20px;
-            font-size: 14px;
-        }
-        #reader { 
-            width: 100%; 
-            border-radius: 8px; 
-            overflow: hidden; 
-            border: 2px solid #e2e8f0; 
-            background-color: #000;
-        }
-        #reader __dashboard { padding: 10px !important; }
-        #reader button {
-            background-color: #4a5568;
-            color: white;
-            border: none;
-            padding: 10px 15px;
-            border-radius: 5px;
-            cursor: pointer;
-            font-size: 14px;
-            margin: 5px;
-        }
-        #reader select {
-            padding: 8px;
-            border-radius: 5px;
-            border: 1px solid #cbd5e0;
-            margin-bottom: 10px;
-            width: 100%;
-        }
-        .counter { 
-            text-align: center; 
-            margin: 15px 0 5px 0; 
-            font-size: 18px; 
-            font-weight: bold; 
-            color: #2b6cb0; 
-            background: #ebf8ff;
-            padding: 10px;
-            border-radius: 6px;
-        }
-        /* Style baru untuk notifikasi duplikat */
-        #status-msg {
-            text-align: center;
-            font-weight: bold;
-            height: 20px;
-            margin-bottom: 10px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-        .btn-group { 
-            display: flex; 
-            gap: 10px; 
-        }
-        .btn { 
-            flex: 1; 
-            padding: 14px; 
-            font-size: 15px; 
-            font-weight: bold; 
-            border: none; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-        }
+        .category-container input:focus { border-color: #3182ce; box-shadow: 0 0 0 2px rgba(66, 153, 225, 0.2); }
+
+        #reader { width: 100%; border-radius: 8px; overflow: hidden; border: 2px solid #e2e8f0; background-color: #000; }
+        #reader button { background-color: #4a5568; color: white; border: none; padding: 10px 15px; border-radius: 5px; cursor: pointer; margin: 5px; }
+        #reader select { padding: 8px; border-radius: 5px; border: 1px solid #cbd5e0; margin-bottom: 10px; width: 100%; }
+        
+        #status-msg { text-align: center; font-weight: bold; height: 20px; margin: 15px 0 10px 0; font-size: 14px; }
+        
+        .btn-group { display: flex; gap: 10px; margin-bottom: 20px;}
+        .btn { flex: 1; padding: 12px; font-size: 14px; font-weight: bold; border: none; border-radius: 8px; cursor: pointer; }
         .btn-excel { background-color: #2f855a; color: white; }
         .btn-clear { background-color: #e53e3e; color: white; flex: 0.5; }
-        .table-section { margin-top: 25px; }
-        .table-section h3 { margin-bottom: 10px; color: #4a5568; font-size: 16px; }
-        .table-wrapper { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; }
-        table { width: 100%; border-collapse: collapse; font-size: 14px; text-align: left; }
-        th, td { padding: 12px; border-bottom: 1px solid #e2e8f0; }
-        th { background-color: #f7fafc; color: #4a5568; font-weight: 600; }
-        tr:nth-child(even) { background-color: #f8fafc; }
-        .scan-success { background-color: #c6f6d5 !important; animation: fadeOutHighlight 2s forwards; }
-        @keyframes fadeOutHighlight {
-            from { background-color: #c6f6d5; }
-            to { background-color: transparent; }
-        }
+        
+        .table-section { margin-top: 20px; }
+        .table-section h3 { margin-bottom: 10px; color: #2d3748; font-size: 16px; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px;}
+        .table-wrapper { overflow-x: auto; border: 1px solid #e2e8f0; border-radius: 8px; max-height: 250px;}
+        table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
+        th, td { padding: 10px; border-bottom: 1px solid #e2e8f0; white-space: nowrap; }
+        th { background-color: #f7fafc; position: sticky; top: 0; }
+        .badge-in { background-color: #c6f6d5; color: #276749; padding: 2px 6px; border-radius: 4px; font-size: 11px;}
+        .badge-out { background-color: #fed7d7; color: #9b2c2c; padding: 2px 6px; border-radius: 4px; font-size: 11px;}
+        .qty-box { font-weight: bold; font-size: 15px; text-align: center; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Material Barcode Scanner</h2>
-    <p class="subtitle">Scan via kamera HP & Export ke Excel (CSV)</p>
+    <h2>Inventory Material</h2>
+    <p class="subtitle">Sistem Database IN/OUT Lokal</p>
+    
+    <div class="mode-selector">
+        <input type="radio" id="mode-in" name="scanMode" value="IN" checked>
+        <label for="mode-in">📥 BARANG MASUK</label>
+        
+        <input type="radio" id="mode-out" name="scanMode" value="OUT">
+        <label for="mode-out">📤 BARANG KELUAR</label>
+    </div>
+
+    <div class="category-container" id="category-box">
+        <label for="input-kategori">🏷️ Kategori Material:</label>
+        <input type="text" id="input-kategori" list="kategori-list" placeholder="Pilih atau ketik kategori..." value="ONT">
+        <datalist id="kategori-list">
+            <option value="Router"></option>
+            <option value="Switch"></option>
+            <option value="ONT"></option>
+            <option value="Cabinet"></option>
+            <option value="Rack"></option>
+            <option value="Subrack"></option>
+            <option value="SFP"></option>
+            <option value="PDU"></option>
+            <option value="Kabel Optik"></option>
+            <option value="Patch Cord"></option>
+        </datalist>
+    </div>
     
     <div id="reader"></div>
-    
-    <div class="counter">📦 Total Terbaca: <span id="total-count">0</span> Item</div>
-    
     <div id="status-msg"></div>
     
     <div class="btn-group">
-        <button class="btn btn-excel" id="btn-export">📥 Unduh Data</button>
-        <button class="btn btn-clear" id="btn-clear">🗑️ Reset</button>
+        <button class="btn btn-excel" id="btn-export">📥 Export Stok (CSV)</button>
+        <button class="btn btn-clear" id="btn-clear">🗑️ Reset DB</button>
     </div>
     
     <div class="table-section">
-        <h3>Preview Data Sementara:</h3>
+        <h3>📦 Database Stok Material</h3>
         <div class="table-wrapper">
             <table>
                 <thead>
                     <tr>
-                        <th style="width: 50px;">No</th>
+                        <th>Kategori</th>
                         <th>Kode Barcode / SN</th>
-                        <th>Waktu Scan</th>
+                        <th style="text-align:center;">Stok</th>
+                        <th>Update Terakhir</th>
                     </tr>
                 </thead>
-                <tbody id="table-body">
+                <tbody id="db-body">
+                    <tr><td colspan="4" style="text-align: center;">Database Kosong</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="table-section">
+        <h3>⏱️ Riwayat Transaksi (Log)</h3>
+        <div class="table-wrapper">
+            <table>
+                <thead>
                     <tr>
-                        <td colspan="3" style="text-align: center; color: #a0aec0; padding: 20px;">
-                            Belum ada data. Arahkan kamera ke barcode.
-                        </td>
+                        <th>Status</th>
+                        <th>Kategori</th>
+                        <th>Kode Barcode</th>
+                        <th>Waktu</th>
                     </tr>
+                </thead>
+                <tbody id="log-body">
+                    <tr><td colspan="4" style="text-align: center;">Belum ada aktivitas</td></tr>
                 </tbody>
             </table>
         </div>
@@ -154,60 +134,93 @@
 </div>
 
 <script>
-    let scannedData = [];
+    let inventoryDB = JSON.parse(localStorage.getItem('material_db')) || {};
+    let scanHistory = JSON.parse(localStorage.getItem('material_log')) || [];
     let lastScannedCode = "";
     let lastScanTime = 0;
 
+    // Logika menampilkan/menyembunyikan kolom kategori berdasarkan mode
+    const radios = document.querySelectorAll('input[name="scanMode"]');
+    const categoryBox = document.getElementById('category-box');
+    
+    radios.forEach(radio => {
+        radio.addEventListener('change', function() {
+            if (this.value === 'IN') {
+                categoryBox.style.display = 'block';
+            } else {
+                categoryBox.style.display = 'none';
+            }
+        });
+    });
+
+    updateUiView();
+
     function onScanSuccess(decodedText, decodedResult) {
         const currentTime = new Date().getTime();
-        const statusMsg = document.getElementById('status-msg');
+        const currentMode = document.querySelector('input[name="scanMode"]:checked').value;
+        const inputKategori = document.getElementById('input-kategori').value.trim() || "Tidak Dikategorikan";
         
-        // 1. Validasi Array: Cek apakah barcode sudah ada di seluruh list scannedData
-        const isDuplicate = scannedData.some(item => item.Kode_Barcode_SN === decodedText);
+        // Jeda anti double-scan
+        if (decodedText === lastScannedCode && (currentTime - lastScanTime < 2500)) return; 
 
-        if (isDuplicate) {
-            // Mencegah peringatan muncul terlalu cepat dan berkedip (beri jeda 2 detik untuk peringatan)
-            if (decodedText !== lastScannedCode || (currentTime - lastScanTime > 2000)) {
-                statusMsg.innerText = "⚠️ Barcode ini sudah masuk di list!";
-                statusMsg.style.color = "#e53e3e"; // Warna merah
+        const waktuSekarang = new Date().toLocaleString('id-ID', { 
+            year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' 
+        });
+
+        let scannedCategory = "";
+
+        if (currentMode === "IN") {
+            scannedCategory = inputKategori;
+            
+            if (inventoryDB[decodedText]) {
+                inventoryDB[decodedText].qty += 1;
+                inventoryDB[decodedText].lastUpdate = waktuSekarang;
+                // Update kategori jika ada perubahan saat scan IN ulang
+                inventoryDB[decodedText].category = scannedCategory;
+            } else {
+                inventoryDB[decodedText] = { category: scannedCategory, qty: 1, lastUpdate: waktuSekarang };
+            }
+            showNotification(`✅ Stok Ditambah!`, "#2f855a");
+            
+        } else if (currentMode === "OUT") {
+            if (inventoryDB[decodedText] && inventoryDB[decodedText].qty > 0) {
+                // Ambil kategori dari database yang sudah ada
+                scannedCategory = inventoryDB[decodedText].category || "Tidak Dikategorikan";
                 
-                // Hilangkan pesan setelah 2 detik
-                setTimeout(() => { 
-                    if(statusMsg.innerText.includes("⚠️")) statusMsg.innerText = ""; 
-                }, 2000);
-                
+                inventoryDB[decodedText].qty -= 1;
+                inventoryDB[decodedText].lastUpdate = waktuSekarang;
+                showNotification(`✅ Stok Dikurangi!`, "#c53030");
+            } else {
+                showNotification(`❌ GAGAL: Stok kosong / SN tidak ditemukan!`, "#e53e3e");
                 lastScannedCode = decodedText;
                 lastScanTime = currentTime;
+                return;
             }
-            return; // Hentikan proses, jangan simpan dan jangan bunyi beep
         }
-        
-        // 2. Jika lolos validasi (data baru), simpan dan proses
+
+        // Simpan log dengan informasi kategori
+        scanHistory.unshift({ 
+            type: currentMode, 
+            category: scannedCategory,
+            code: decodedText, 
+            time: waktuSekarang 
+        });
+
+        localStorage.setItem('material_db', JSON.stringify(inventoryDB));
+        localStorage.setItem('material_log', JSON.stringify(scanHistory));
+
         lastScannedCode = decodedText;
         lastScanTime = currentTime;
         
         playBeepSound();
-        
-        // Tampilkan indikator sukses
-        statusMsg.innerText = "✅ Berhasil discan!";
-        statusMsg.style.color = "#2f855a"; // Warna hijau
-        setTimeout(() => { 
-            if(statusMsg.innerText.includes("✅")) statusMsg.innerText = ""; 
-        }, 2000);
-        
-        const waktuSekarang = new Date().toLocaleString('id-ID', { 
-            year: 'numeric', month: '2-digit', day: '2-digit',
-            hour: '2-digit', minute: '2-digit', second: '2-digit' 
-        });
-        
-        const nomorUrut = scannedData.length + 1;
-        scannedData.push({
-            "No": nomorUrut,
-            "Kode_Barcode_SN": decodedText,
-            "Waktu_Scan": waktuSekarang
-        });
-        
         updateUiView();
+    }
+
+    function showNotification(text, color) {
+        const statusMsg = document.getElementById('status-msg');
+        statusMsg.innerText = text;
+        statusMsg.style.color = color;
+        setTimeout(() => { statusMsg.innerText = ""; }, 2500);
     }
 
     function playBeepSound() {
@@ -215,54 +228,71 @@
             const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             const oscillator = audioCtx.createOscillator();
             const gainNode = audioCtx.createGain();
-            
             oscillator.type = "sine";
             oscillator.frequency.setValueAtTime(900, audioCtx.currentTime);
             gainNode.gain.setValueAtTime(0.1, audioCtx.currentTime);
-            
             oscillator.connect(gainNode);
             gainNode.connect(audioCtx.destination);
-            
             oscillator.start();
             oscillator.stop(audioCtx.currentTime + 0.12);
-        } catch (e) { 
-            console.log("Audio tidak didukung."); 
-        }
+        } catch (e) { console.log("Audio tidak didukung."); }
     }
 
     function updateUiView() {
-        const tbody = document.getElementById('table-body');
-        document.getElementById('total-count').innerText = scannedData.length;
+        const dbBody = document.getElementById('db-body');
+        const logBody = document.getElementById('log-body');
         
-        if (scannedData.length === 0) {
-            tbody.innerHTML = `<tr><td colspan="3" style="text-align: center; color: #a0aec0; padding: 20px;">Belum ada data.</td></tr>`;
-            return;
+        let dbHtml = "";
+        const dbKeys = Object.keys(inventoryDB);
+        if (dbKeys.length === 0) {
+            dbHtml = `<tr><td colspan="4" style="text-align: center; color: #a0aec0;">Database Kosong</td></tr>`;
+        } else {
+            dbKeys.forEach(key => {
+                const item = inventoryDB[key];
+                const qtyStyle = item.qty === 0 ? "color: red;" : "color: #2b6cb0;";
+                const catText = item.category || "-";
+                dbHtml += `<tr>
+                    <td style="font-weight: 500; color: #4a5568;">${catText}</td>
+                    <td style="font-family: monospace; font-weight: bold;">${key}</td>
+                    <td class="qty-box" style="${qtyStyle}">${item.qty}</td>
+                    <td style="color: #718096; font-size: 11px;">${item.lastUpdate}</td>
+                </tr>`;
+            });
         }
-        
-        let tableRowsHtml = "";
-        for (let i = scannedData.length - 1; i >= 0; i--) {
-            const item = scannedData[i];
-            const isLatestRow = (i === scannedData.length - 1) ? "class='scan-success'" : "";
-            
-            tableRowsHtml += `<tr ${isLatestRow}>
-                <td>${item.No}</td>
-                <td style="font-family: monospace; font-size: 15px; font-weight: bold;">${item.Kode_Barcode_SN}</td>
-                <td style="color: #718096; font-size: 13px;">${item.Waktu_Scan}</td>
-            </tr>`;
+        dbBody.innerHTML = dbHtml;
+
+        let logHtml = "";
+        if (scanHistory.length === 0) {
+            logHtml = `<tr><td colspan="4" style="text-align: center; color: #a0aec0;">Belum ada aktivitas</td></tr>`;
+        } else {
+            const displayLog = scanHistory.slice(0, 20);
+            displayLog.forEach(log => {
+                const badgeClass = log.type === "IN" ? "badge-in" : "badge-out";
+                const catText = log.category || "-";
+                logHtml += `<tr>
+                    <td><span class="${badgeClass}">${log.type}</span></td>
+                    <td style="font-size: 12px; color: #4a5568;">${catText}</td>
+                    <td style="font-family: monospace;">${log.code}</td>
+                    <td style="color: #718096; font-size: 11px;">${log.time}</td>
+                </tr>`;
+            });
         }
-        tbody.innerHTML = tableRowsHtml;
+        logBody.innerHTML = logHtml;
     }
 
     document.getElementById('btn-export').addEventListener('click', function() {
-        if (scannedData.length === 0) {
-            alert("⚠️ Belum ada data material yang di-scan!");
+        const dbKeys = Object.keys(inventoryDB);
+        if (dbKeys.length === 0) {
+            alert("⚠️ Database stok masih kosong!");
             return;
         }
 
-        let csvContent = "No,Kode Barcode/SN,Waktu Scan\n";
+        let csvContent = "Kategori,Kode Barcode/SN,Total Stok,Update Terakhir\n";
         
-        scannedData.forEach(function(row) {
-            let baris = `"${row.No}","${row.Kode_Barcode_SN}","${row.Waktu_Scan}"`;
+        dbKeys.forEach(function(key) {
+            const item = inventoryDB[key];
+            const catText = item.category || "-";
+            let baris = `"${catText}","${key}","${item.qty}","${item.lastUpdate}"`;
             csvContent += baris + "\n";
         });
 
@@ -272,7 +302,7 @@
         
         const dateStamp = new Date().toISOString().slice(0,10);
         link.setAttribute("href", url);
-        link.setAttribute("download", `Rekap_Scan_${dateStamp}.csv`);
+        link.setAttribute("download", `Database_Stok_${dateStamp}.csv`);
         
         document.body.appendChild(link);
         link.click();
@@ -280,25 +310,19 @@
     });
 
     document.getElementById('btn-clear').addEventListener('click', function() {
-        if (scannedData.length === 0) return;
-        if (confirm("⚠️ Yakin hapus semua data scan?")) {
-            scannedData = [];
-            lastScannedCode = "";
-            document.getElementById('status-msg').innerText = "";
+        if (Object.keys(inventoryDB).length === 0) return;
+        if (confirm("⚠️ PERINGATAN! Anda yakin ingin menghapus SELURUH DATABASE STOK dan LOG? Data yang terhapus tidak bisa dikembalikan.")) {
+            inventoryDB = {};
+            scanHistory = [];
+            localStorage.removeItem('material_db');
+            localStorage.removeItem('material_log');
             updateUiView();
         }
     });
 
     const html5QrcodeScanner = new Html5QrcodeScanner(
-        "reader", 
-        { 
-            fps: 10,
-            rememberLastUsedCamera: true,
-            supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA]
-        },
-        false
+        "reader", { fps: 10, rememberLastUsedCamera: true, supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] }, false
     );
-    
     html5QrcodeScanner.render(onScanSuccess);
 </script>
 
