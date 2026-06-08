@@ -253,8 +253,12 @@
     // PENGATURAN SCANNER DIPERBARUI UNTUK KECEPATAN
     const html5QrcodeScanner = new Html5QrcodeScanner(
         "reader", { 
-            fps: 20, // Dinaikkan menjadi 20 Frame per Detik agar responsif
-            qrbox: { width: 280, height: 130 }, // Target kotak persegi panjang dikembalikan untuk mempercepat komputasi (memangkas area baca)
+            fps: 20, 
+            // Membuat ukuran kotak target dinamis (80% dari lebar layar HP, tinggi tetap 130px)
+            qrbox: function(viewfinderWidth, viewfinderHeight) {
+                let boxWidth = Math.floor(viewfinderWidth * 0.8);
+                return { width: boxWidth, height: 130 };
+            },
             rememberLastUsedCamera: true, 
             supportedScanTypes: [Html5QrcodeScanType.SCAN_TYPE_CAMERA] 
         }, false
